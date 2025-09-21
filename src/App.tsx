@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Main from "./pages/Main";
+import HomePage from "./pages/HomePage";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         {/* Routes */}
         <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/Home" element={<HomePage />} />
         </Routes>
       </div>
     </Router>
