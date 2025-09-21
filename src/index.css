@@ -1,10 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  /* Font */
+  --font-sans: Prompt, ui-sans-serif, system-ui, sans-serif;
+
+  /* Purple Shades */
+  --color-purple-50:  #847CE0;
+  --color-purple-100: #643FC9;
+  --color-purple-200: #381D7F;
+
+  /* Pink Shades */
+  --color-pink-50:   #F0B7FC;
+  --color-pink-100:  #E66AFF;
+
+  /* Base Colors */
+  --color-black:     #282424;
+  --color-white:     #ffffff;
+}
+
 body {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #8e3838;
+  background-color: var(--color-white);
 }

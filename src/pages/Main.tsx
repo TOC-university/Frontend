@@ -16,13 +16,13 @@ export default function Main() {
         </a>
       </div>
 
-      <h1 className="text-5xl font-bold text-green-300 mb-8">
+      <h1 className="text-5xl font-bold text-pink-100 mb-8">
         Vite + React + Tailwind
       </h1>
 
       <div className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center gap-4">
         <button
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+          className="bg-purple-50 hover:bg-purple-100 text-white font-semibold py-2 px-4 rounded transition-colors"
           onClick={() => setCount((c) => c + 1)}
         >
           Count: {count}
