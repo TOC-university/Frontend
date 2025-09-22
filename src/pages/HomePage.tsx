@@ -39,13 +39,31 @@ export default function HomePage() {
     setSuggestions([]);
   };
 
+  function highlightText(text: string, query: string) {
+    if (!query) return text;
+
+    const regex = new RegExp(`(${query})`, "gi");
+    const parts = text.split(regex);
+
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="text-pink-100 ">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  }
+
+
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto gap-15">
+    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto ">
       <img
         src={BackWorld}
         alt="background"
-        className="absolute bottom-0 object-cover z-0"
+        className="absolute bottom-0 object-cover z-0 "
       />
       {/* Navbar */}
       <nav className="flex justify-between items-center px-20 py-10 z-10">
@@ -66,7 +84,7 @@ export default function HomePage() {
         <h1 className="text-3xl md:text-5xl font-extrabold text-purple-100 mb-4 ">
           Discover <span className="text-pink-100">Universities</span> Around the World
         </h1>
-        <p className="text-3xl md:text-4xl font-semibold text-purple-200 mb-6">
+        <p className="text-2xl md:text-4xl font-semibold text-purple-200 mb-6">
           Search by university name or <br></br> explore universities by country
         </p>
 
@@ -91,8 +109,9 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* Search bar */}
-        <div className="w-[55%]  text-purple-100 text-opacity-70 font-semibold text-xl relative  ">
+        {/* Search Section */}
+        <div className="w-[55%] bg-white pl-6 pr-3 py-3  gap-3 rounded-full border-3 border-purple-50 
+              text-purple-100 text-opacity-70 font-semibold text-sm  focus-within:border-purple-100 flex md:text-xl">
           <input
             type="text"
             placeholder="Enter university name or country..."
@@ -100,54 +119,61 @@ export default function HomePage() {
             onChange={handleChange}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 100)}
-            className=" bg-white  w-full px-6 py-4 rounded-full border-3 border-purple-50 focus:border-purple-100 focus:outline-none shadow-md focus:placeholder-transparent"
+            className="bg-white w-full focus:outline-none focus:placeholder-transparent "
           />
 
           {/* ปุ่ม Clear */}
           {query && (
             <button
               onClick={handleClear}
-              className="absolute pr-15 right-14 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 "
+              className=" text-gray-400 hover:text-gray-600"
             >
-              <img src={Cross} alt="" className="h-6 w-6 cursor-pointer" />
+              <img src={Cross} alt="" className="h-8 w-8 cursor-pointer" />
             </button>
           )}
 
           <button
             disabled={query === ""}
             onClick={query ? handleClear : undefined}
-            className={`flex items-center absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2 rounded-full
+            className={`flex items-center px-4 py-2 rounded-full
             ${query !== ""
-                ? "bg-purple-100 text-white cursor-pointer"  // ok
-                : "bg-purple-50 text-white " // disabled
+                ? "bg-purple-100 text-white cursor-pointer"
+                : "bg-purple-50 text-white "
               }`}
           >
-            {!focused && query === "" ? ( // case 1
+            {!focused && query === "" ? (
               <Icon icon="heroicons:magnifying-glass-16-solid" className="w-6 h-6" />
             ) : (
-              "Search" // case 2,3
+              "Search"
             )}
           </button>
+        </div>
 
-          {/* Suggestions dropdown */}        
-          {focused && suggestions.length > 0 && (
-            <ul className="absolute mt-2 w-full max-h-[calc(100vh-2rem)]
-                 bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-20 ">
-              {suggestions.map((s, idx) => (
+        {/* Dropdown cut */}
+        {focused && suggestions.length > 0 && (
+          <div className=" w-[55%] mt-2  relative">
+            <ul
+              className="absolute w-full max-h-[calc(100vh-4rem)]
+                 bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-20
+                 "
+            >
+              {suggestions.slice(0, 4).map((s, idx) => (
                 <li
                   key={idx}
                   onClick={() => { setQuery(s); setSuggestions([]); }}
-                  className="flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 transition-colors duration-200 cursor-pointer text-left gap-4"
+                  className="flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 
+                     transition-colors duration-200 cursor-pointer text-left gap-4"
                 >
-                  <Icon icon="heroicons:magnifying-glass-16-solid" className="w-8 h-8 text-purple-300 flex-shrink-0" />
-                  <span className=" font-semibold ">{s}</span>
+                  <Icon icon="heroicons:magnifying-glass-16-solid"
+                    className="w-8 h-8 text-purple-300 flex-shrink-0" />
+                  <span className="font-semibold text-normal">{highlightText(s, query)}</span>
                   <img src={GoIcon} alt="" className="h-8 w-8 ml-auto flex-shrink-0" />
                 </li>
               ))}
             </ul>
-          )}
+          </div>
+        )}
 
-        </div>
       </div>
     </div>
   );
