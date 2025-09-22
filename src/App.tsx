@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Main from "./pages/Main";
 import HomePage from "./pages/HomePage";
+import ResultTable from "./pages/ResultTable";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Main />} />
           <Route path="/Home" element={<HomePage />} />
+          <Route path="/ResultTable" element={<ResultTable />} />
         </Routes>
       </div>
     </Router>
