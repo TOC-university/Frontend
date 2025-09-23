@@ -26,3 +26,23 @@ body {
   color-scheme: light dark;
   background-color: var(--color-white);
 }
+
+@layer utilities {
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 7px;
+    height: 2px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #643FC9;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #381D7F;
+  }
+}
