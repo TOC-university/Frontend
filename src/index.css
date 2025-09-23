@@ -8,6 +8,7 @@
   --color-purple-50:  #847CE0;
   --color-purple-100: #643FC9;
   --color-purple-200: #381D7F;
+  --color-purple-300: #ACA7E9;
 
   /* Pink Shades */
   --color-pink-50:   #F0B7FC;
@@ -24,4 +25,24 @@ body {
   font-weight: 400;
   color-scheme: light dark;
   background-color: var(--color-white);
+}
+
+@layer utilities {
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 7px;
+    height: 2px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #643FC9;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #381D7F;
+  }
 }

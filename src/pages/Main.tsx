@@ -36,5 +36,6 @@ export default function Main() {
         Click the button to increase the counter
       </p>
     </div>
+    
   );
 }
