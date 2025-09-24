@@ -1,5 +1,3 @@
-import Logo from "../assets/logo-nav.svg";
-import CatGithub from "../assets/cat-github.svg";
 import BackWorld from "../assets/background-home.svg";
 import Cross from "../assets/cross.svg";
 import GoIcon from "../assets/go-icon.svg";
@@ -59,26 +57,12 @@ export default function HomePage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto ">
+    <div className="h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto scrollbar-custom pt-30 relative">
       <img
         src={BackWorld}
         alt="background"
-        className="absolute bottom-0 object-cover z-0 "
+        className="fixed bottom-0 left-0 w-full  object-cover z-0 "
       />
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-20 py-10 z-10">
-        <div className="flex items-center space-x-2">
-          <img className="h-10 w-10" src={Logo} alt="universities search" />
-          <span className="font-bold text-purple-100 text-2xl">
-            Universities<span className="text-pink-100 ">Search</span>
-          </span>
-        </div>
-        <button className=" flex gap-2 justify-center items-center bg-purple-100 text-white px-5 py-2 rounded-full hover:bg-purple-200 transition">
-          <img className="h-6 w-6" src={CatGithub} alt="" />
-          GitHub
-        </button>
-      </nav>
-
       {/* Main Section */}
       <div className="flex flex-col items-center justify-center text-center z-10  p-8 ">
         <h1 className="text-3xl md:text-5xl font-extrabold text-purple-100 mb-4 ">
@@ -154,7 +138,7 @@ export default function HomePage() {
           <div className=" w-[55%] mt-2  relative">
             <ul
               className="absolute w-full max-h-[calc(100vh-4rem)]
-                 bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-20
+                 bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-10
                  "
             >
               {suggestions.slice(0, 4).map((s, idx) => (
@@ -166,7 +150,7 @@ export default function HomePage() {
                 >
                   <Icon icon="heroicons:magnifying-glass-16-solid"
                     className="w-8 h-8 text-purple-300 flex-shrink-0" />
-                  <span className="font-semibold text-normal">{highlightText(s, query)}</span>
+                  <span className="font-semibold text-xl">{highlightText(s, query)}</span>
                   <img src={GoIcon} alt="" className="h-8 w-8 ml-auto flex-shrink-0" />
                 </li>
               ))}
@@ -178,4 +162,3 @@ export default function HomePage() {
     </div>
   );
 }
-

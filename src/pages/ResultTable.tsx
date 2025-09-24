@@ -24,22 +24,8 @@ export default function ResultTable() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto relative">
+        <div className="h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto scrollbar-custom pt-20 relative">
         <img src={BackWorld} alt="background" className="absolute bottom-0 object-cover z-0" />
-
-        {/* Navbar */}
-        <nav className="flex justify-between items-center px-20 py-10 z-10">
-            <div className="flex items-center space-x-2">
-            <img className="h-10 w-10" src={Logo} alt="universities search" />
-            <span className="font-bold text-purple-100 text-2xl">
-                Universities<span className="text-pink-100">Search</span>
-            </span>
-            </div>
-            <button className="flex gap-2 justify-center items-center bg-purple-100 text-white px-5 py-2 rounded-full hover:bg-purple-200 transition">
-            <img className="h-6 w-6" src={CatGithub} alt="" />
-            GitHub
-            </button>
-        </nav>
 
         {/* Main Section */}
         <div className="flex flex-col items-center justify-center text-center z-10 px-20 p-4">
@@ -52,7 +38,7 @@ export default function ResultTable() {
                         Result : <span className="font-bold">{searchInput}</span>
                     </span>
                 </div>
-                <button className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100  transition">
+                <button className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:shadow-[0_0_10px_#a855f7] transition cursor-pointer">
                     <Icon icon="mdi:file-download-outline" width={20} />
                     Get CSV
                 </button>
