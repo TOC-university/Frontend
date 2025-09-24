@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import Logo from "./assets/logo-nav.svg";
 import CatGithub from "./assets/cat-github.svg";
 import ResultTable from "./pages/ResultTable"
+import DetailPage from "./pages/DetailPage"
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/" element={<Main />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/ResultTable" element={<ResultTable />} />
+            <Route path="/Detail/:university" element={<DetailPage />} />
           </Routes>
         </div>
       </div>
