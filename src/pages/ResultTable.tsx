@@ -1,5 +1,3 @@
-import Logo from "../assets/logo-nav.svg";
-import CatGithub from "../assets/cat-github.svg";
 import BackWorld from "../assets/background-home.svg";
 import { Icon } from "@iconify/react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,7 +8,7 @@ export default function ResultTable() {
     const navigate = useNavigate();
     const [searchInput, setSearchInput] = useState(null);
 
-    // รับค่า search
+    // รับค่า search  เช่น /ResultTable?search=[input]
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const search = params.get("search");
