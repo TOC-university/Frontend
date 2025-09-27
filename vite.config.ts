@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['http://toc-university.member.ce-nacl.com', 'toc-university.member.ce-nacl.com']
+    allowedHosts: ['toc-university.member.ce-nacl.com']
   }
 })
