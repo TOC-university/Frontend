@@ -14,32 +14,44 @@ export default function HomePage() {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-
+  
     if (value.trim() === "") {
       setSuggestions([]);
       return;
     }
-
+  
     try {
       const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           q: value,
-          k: 5,
+          k: 4,
           rebuild: false,
+          limit_units: 0,
+          countries: []
         }),
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.suggestions || []);
+    
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Server ${res.status}: ${errorText}`);
       }
+    
+      const data = await res.json();
+      console.log("Response:", data);
+    
+      const safeSuggestions = Array.isArray(data.suggestions)
+        ? data.suggestions.map((s: any) => (typeof s === "string" ? s : s.name))
+        : [];
+      setSuggestions(safeSuggestions);
+    
     } catch (err) {
       console.error("Search error:", err);
+      setSuggestions([]); 
     }
   };
-
+    
   const handleClear = () => {
     setQuery("");
     setSuggestions([]);
@@ -77,8 +89,8 @@ export default function HomePage() {
         <p className="text-2xl md:text-4xl font-semibold text-purple-200 mb-6">
           Search by university name or <br /> explore universities by country
         </p>
-        {/* Tags */}
-        <div className="flex space-x-4 mb-6">
+                {/* Tags */}
+                <div className="flex space-x-4 mb-6">
           <span className=" inline-block rounded-full p-[2px] bg-gradient-to-r from-white to-purple-50">
             <span className="block px-3 py-1 rounded-full bg-white text-purple-100 text-sm">
               Smart Search
@@ -106,6 +118,12 @@ export default function HomePage() {
             placeholder="Enter university name or country..."
             value={query}
             onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && query.trim() !== "") {
+                e.preventDefault(); 
+                navigate(`/ResultTable?search=${encodeURIComponent(query)}`);
+              }
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 100)}
             className="bg-white w-full focus:outline-none focus:placeholder-transparent"
@@ -126,7 +144,6 @@ export default function HomePage() {
             disabled={query === ""}
             onClick={() => {
               if (query.trim() !== "") {
-                // ไป ResultTable โดยส่ง query ที่พิมพ์ไป
                 navigate(`/ResultTable?search=${encodeURIComponent(query)}`);
               }
             }}
@@ -143,35 +160,37 @@ export default function HomePage() {
             )}
           </button>
         </div>
-          {/* Dropdown */}
-          {focused && suggestions.length > 0 && (
-            <div className="w-[55%] mt-2 relative">
-              <ul className="absolute w-full bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-10">
-                {suggestions.slice(0, 4).map((s, idx) => (
-                  <li
-                    key={idx}
-                    onClick={() => {
+
+        {/* Dropdown */}
+        {focused && suggestions.length > 0 && (
+          <div className="w-[55%] mt-2 relative">
+            <ul className="absolute w-full bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-10">
+              {suggestions.slice(0, 4).map((s, idx) => (
+                <li key={idx}>
+                  <button
+                    type="button"
+                    onMouseDown={() => {
                       setQuery(s);
                       setSuggestions([]);
-                      // ไป ResultTable แต่เจาะไปที่มหาลัยที่เลือก
                       navigate(`/ResultTable?search=${encodeURIComponent(s)}`);
                     }}
-                    className="flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 
+                    className="w-full flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 
                               transition-colors duration-200 cursor-pointer text-left gap-4"
                   >
                     <Icon
                       icon="heroicons:magnifying-glass-16-solid"
                       className="w-8 h-8 text-purple-300 flex-shrink-0"
                     />
-                    <span className="font-semibold text-xl">
+                    <span className="font-semibold text-xl flex-1 text-left">
                       {highlightText(s, query)}
                     </span>
                     <img src={GoIcon} alt="" className="h-8 w-8 ml-auto flex-shrink-0" />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -46,14 +46,14 @@ export default function ResultTable() {
       const data = await res.json();
       if (data.suggestions) {
         setUniversities(
-          data.suggestions.map((name: string) => ({
-            name,
-            abbreviation: "",
-            country: "",
-            path: "",
+          data.suggestions.map((s: any) => ({
+            name: s.name,                
+            abbreviation: s.abbreviation || "",
+            country: s.country || "",
+            path: s.path || "",
           }))
         );
-      }
+      }     
     } catch (err) {
       console.error(err);
     } finally {
