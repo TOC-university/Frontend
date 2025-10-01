@@ -30,7 +30,7 @@ export default function DetailPage() {
 
         // ดึงข้อมูลมหาวิทยาลัยจาก backend
         const res = await axios.post(
-          "http://0.0.0.0:8000/crawl/university", //เเก้ domain
+          "https://uni-regex.nmasang.member.ce-nacl.com/crawl/university", //เเก้ domain
           null,
           {
             params: {
@@ -42,7 +42,7 @@ export default function DetailPage() {
         const data = res.data;
 
         // ดึงโลโก้จาก backend
-        const logoRes = await axios.get("http://0.0.0.0:8000/logo", { //เเก้ domain
+        const logoRes = await axios.get("https://uni-regex.nmasang.member.ce-nacl.com/logo", { //เเก้ domain
           params: { name: university },
         });
 
@@ -56,7 +56,7 @@ export default function DetailPage() {
           website: data.website,
           campus: data.campuses,
           faculties: data.faculties.filter((f: string) => f.trim() !== ""),
-          logo_url: "http://0.0.0.0:8000" + logoRes.data.logo_url, //เเก้ domain
+          logo_url: "https://uni-regex.nmasang.member.ce-nacl.com" + logoRes.data.logo_url, //เเก้ domain
         });
       } catch (err) {
         console.error(err);

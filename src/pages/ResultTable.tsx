@@ -31,11 +31,11 @@ export default function ResultTable() {
     }
   }, [location.search]);
 
-  // 🔎 case search
+
   const fetchSuggest = async (query: string) => {
     try {
       setLoading(true);
-      const res = await fetch("http://0.0.0.0:8000/search/suggest", { //เเก้ domain
+      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", { //เเก้ domain
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -61,11 +61,11 @@ export default function ResultTable() {
     }
   };
 
-  // 🌍 case country
+
   const fetchUniversitiesByCountry = async (country: string) => {
     try {
       setLoading(true);
-      const res = await fetch("http://0.0.0.0:8000/crawl/universities", { //เเก้ domain
+      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities", { //เเก้ domain
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ countries: [country] }),
