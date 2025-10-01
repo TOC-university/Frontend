@@ -3,11 +3,13 @@ import Cross from "../assets/cross.svg";
 import GoIcon from "../assets/go-icon.svg";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";  
 
 export default function HomePage() {
   const [query, setQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -119,61 +121,57 @@ export default function HomePage() {
             </button>
           )}
 
+          {/* ปุ่ม Search */}
           <button
             disabled={query === ""}
-            onClick={query ? handleClear : undefined}
+            onClick={() => {
+              if (query.trim() !== "") {
+                // ไป ResultTable โดยส่ง query ที่พิมพ์ไป
+                navigate(`/ResultTable?search=${encodeURIComponent(query)}`);
+              }
+            }}
             className={`flex items-center px-4 py-2 rounded-full
-            ${
-              query !== ""
+              ${query !== ""
                 ? "bg-purple-100 text-white cursor-pointer"
-                : "bg-purple-50 text-white"
-            }`}
+                : "bg-purple-50 text-white"}
+            `}
           >
             {!focused && query === "" ? (
-              <Icon
-                icon="heroicons:magnifying-glass-16-solid"
-                className="w-6 h-6"
-              />
+              <Icon icon="heroicons:magnifying-glass-16-solid" className="w-6 h-6" />
             ) : (
               "Search"
             )}
           </button>
         </div>
-
-        {/* Dropdown */}
-        {focused && suggestions.length > 0 && (
-          <div className="w-[55%] mt-2 relative">
-            <ul
-              className="absolute w-full max-h-[calc(100vh-4rem)]
-                 bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-10"
-            >
-              {suggestions.slice(0, 4).map((s, idx) => (
-                <li
-                  key={idx}
-                  onClick={() => {
-                    setQuery(s);
-                    setSuggestions([]);
-                  }}
-                  className="flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 
-                     transition-colors duration-200 cursor-pointer text-left gap-4"
-                >
-                  <Icon
-                    icon="heroicons:magnifying-glass-16-solid"
-                    className="w-8 h-8 text-purple-300 flex-shrink-0"
-                  />
-                  <span className="font-semibold text-xl">
-                    {highlightText(s, query)}
-                  </span>
-                  <img
-                    src={GoIcon}
-                    alt=""
-                    className="h-8 w-8 ml-auto flex-shrink-0"
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {/* Dropdown */}
+          {focused && suggestions.length > 0 && (
+            <div className="w-[55%] mt-2 relative">
+              <ul className="absolute w-full bg-white rounded-3xl border-3 border-purple-100 shadow-lg z-10">
+                {suggestions.slice(0, 4).map((s, idx) => (
+                  <li
+                    key={idx}
+                    onClick={() => {
+                      setQuery(s);
+                      setSuggestions([]);
+                      // ไป ResultTable แต่เจาะไปที่มหาลัยที่เลือก
+                      navigate(`/ResultTable?search=${encodeURIComponent(s)}`);
+                    }}
+                    className="flex items-center text-purple-100 px-4 py-3 hover:text-pink-100 
+                              transition-colors duration-200 cursor-pointer text-left gap-4"
+                  >
+                    <Icon
+                      icon="heroicons:magnifying-glass-16-solid"
+                      className="w-8 h-8 text-purple-300 flex-shrink-0"
+                    />
+                    <span className="font-semibold text-xl">
+                      {highlightText(s, query)}
+                    </span>
+                    <img src={GoIcon} alt="" className="h-8 w-8 ml-auto flex-shrink-0" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
       </div>
     </div>
   );
