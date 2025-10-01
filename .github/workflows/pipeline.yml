@@ -1,0 +1,25 @@
+name: deploy ToC frontend
+on:
+  push:
+    branches: 
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Delete old container
+        run: docker rm -f frontend-container || true
+
+      - name: Delete old images
+        run: docker image prune -f --filter "label=frontend-image" || true
+
+      - name: Build image
+        run: docker build --rm -t frontend-image .
+
+      - name: Run container
+        run: docker run --restart unless-stopped -d -p 5173:5173 --name frontend-container frontend-image
