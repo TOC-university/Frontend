@@ -1,6 +1,7 @@
 import BackWorld from "../assets/background-home.svg";
 import { Icon } from "@iconify/react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import { useEffect, useState } from "react";
 
 type UniversityDetailType = {
@@ -12,18 +13,7 @@ type UniversityDetailType = {
   website: string;
   campus: string[];
   faculties: string[];
-};
-
-// Mock Data
-const mockDetail: UniversityDetailType = {
-  name: "King Mongkut's Institute of Technology Ladkrabang",
-  abbreviation: "KMITL",
-  location: "Bangkok, Thailand",
-  president: "Anuwat Jangwanichloet",
-  established: "1960",
-  website: "https://www.kmitl.ac.th",
-  campus: ["Chalongkrung Campus", "Prince of Chumphon Campus"],
-  faculties: ["KMITL Business School", "Faculty of Engineering", "Faculty of Science"],
+  logo_url?: string;
 };
 
 export default function DetailPage() {
@@ -31,9 +21,53 @@ export default function DetailPage() {
   // /detail/[university]
   const { university } = useParams<{ university: string }>();
   const [universityDetail, setUniversityDetail] = useState<UniversityDetailType | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    setUniversityDetail(mockDetail);
+    const fetchUniversityDetail = async () => {
+      try {
+        setLoading(true);
+
+        // ดึงข้อมูลมหาวิทยาลัยจาก backend
+        const res = await axios.post(
+          "https://uni-regex.nmasang.member.ce-nacl.com/crawl/university", //เเก้ domain
+          null,
+          {
+            params: {
+              path: `https://en.wikipedia.org/wiki/${university}`,
+            },
+          }
+        );
+
+        const data = res.data;
+
+        // ดึงโลโก้จาก backend
+        const logoRes = await axios.get("https://uni-regex.nmasang.member.ce-nacl.com/logo", { //เเก้ domain
+          params: { name: university },
+        });
+
+        // set ค่าให้ state
+        setUniversityDetail({
+          name: university ?? "Unknown University",
+          abbreviation: data.abbr,
+          location: "N/A",
+          president: "N/A",
+          established: data.estab,
+          website: data.website,
+          campus: data.campuses,
+          faculties: data.faculties.filter((f: string) => f.trim() !== ""),
+          logo_url: "https://uni-regex.nmasang.member.ce-nacl.com" + logoRes.data.logo_url, //เเก้ domain
+        });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (university) {
+      fetchUniversityDetail();
+    }
   }, [university]);
 
   return (
@@ -60,76 +94,91 @@ export default function DetailPage() {
           </button>
         </div>
 
-        {/* detail */}
-        <div className="w-full flex flex-col md:flex-row gap-6 items-center md:items-start mb-4">
-          <div className="flex-shrink-0">
-            <img
-              src="https://www.eng.kmitl.ac.th/storage/2024/06/About-4-B.png"
-              className="w-[250px] h-[250px] object-contain rounded-3xl border-2 border-pink-50 bg-white p-2"
+        {/* ถ้า loading แสดง spinner */}
+        {loading ? (
+          <div className="flex items-center justify-center py-4">
+            <Icon
+              icon="mdi:loading"
+              className="animate-spin text-purple-100"
+              width={40}
             />
+            <span className="ml-3 text-purple-100">Loading...</span>
           </div>
+        ) : (
+          <>
+            {/* detail */}
+            <div className="w-full flex flex-col md:flex-row gap-6 items-center md:items-start mb-4">
+              <div className="flex-shrink-0">
+                <img
+                  src={universityDetail?.logo_url}
+                  alt={`${universityDetail?.name} logo`}
+                  className="w-[250px] h-[250px] object-contain rounded-3xl border-2 border-pink-50 bg-white p-2"
+                />
+              </div>
 
-          {/* Info */}
-          <div className="w-full flex flex-col justify-between text-left rounded-3xl border-2 border-pink-50 bg-white p-5 space-y-2">
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">Name :</span> {universityDetail?.name}
-            </p>
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">Abbreviation :</span> {universityDetail?.abbreviation}
-            </p>
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">Location :</span> {universityDetail?.location}
-            </p>
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">President :</span> {universityDetail?.president}
-            </p>
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">Established :</span> {universityDetail?.established}
-            </p>
-            <p className="text-purple-100 text-xl">
-              <span className="text-black me-4">Website :</span>{" "}
-              <a href={universityDetail?.website} target="_blank" className="hover:text-purple-100">
-                {universityDetail?.website} ↗
-              </a>
-            </p>
-          </div>
-        </div>
+              {/* Info */}
+              <div className="w-full flex flex-col justify-between text-left rounded-3xl border-2 border-pink-50 bg-white p-5 space-y-2">
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">Name :</span> {universityDetail?.name}
+                </p>
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">Abbreviation :</span> {universityDetail?.abbreviation}
+                </p>
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">Location :</span> {universityDetail?.location}
+                </p>
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">President :</span> {universityDetail?.president}
+                </p>
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">Established :</span> {universityDetail?.established}
+                </p>
+                <p className="text-purple-100 text-xl">
+                  <span className="text-black me-4">Website :</span>{" "}
+                  <a href={universityDetail?.website} target="_blank" className="hover:text-purple-100">
+                    {universityDetail?.website} ↗
+                  </a>
+                </p>
+              </div>
+            </div>
 
-        {/* Campuses Table */}
-        <div className="w-full rounded-3xl overflow-hidden border-2 border-pink-50 mb-4">
-          <table className="w-full text-left">
-            <thead className="bg-pink-50">
-              <tr>
-                <th className="px-6 py-4 ">Campuses</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {universityDetail?.campus.map((campus, idx) => (
-                <tr key={idx} className="border-t-1 border-pink-50">
-                  <td className="px-6 py-4 ">{campus}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            {/* Campuses Table */}
+            <div className="w-full rounded-3xl overflow-hidden border-2 border-pink-50 mb-4">
+              <table className="w-full text-left">
+                <thead className="bg-pink-50">
+                  <tr>
+                    <th className="px-6 py-4 ">Campuses</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {universityDetail?.campus.map((campus, idx) => (
+                    <tr key={idx} className="border-t-1 border-pink-50">
+                      <td className="px-6 py-4 ">{campus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Faculties Table */}
-        <div className="w-full rounded-3xl overflow-hidden border-2 border-pink-50 mb-4">
-          <table className="w-full text-left">
-            <thead className="bg-pink-50">
-              <tr>
-                <th className="px-6 py-4 ">Faculties</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {universityDetail?.faculties.map((faculty, idx) => (
-                <tr key={idx} className="border-t-1 border-pink-50">
-                  <td className="px-6 py-4 ">{faculty}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            {/* Faculties Table */}
+            <div className="w-full rounded-3xl overflow-hidden border-2 border-pink-50 mb-4">
+              <table className="w-full text-left">
+                <thead className="bg-pink-50">
+                  <tr>
+                    <th className="px-6 py-4 ">Faculties</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {universityDetail?.faculties.map((faculty, idx) => (
+                    <tr key={idx} className="border-t-1 border-pink-50">
+                      <td className="px-6 py-4 ">{faculty}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
