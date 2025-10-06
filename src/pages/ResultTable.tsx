@@ -3,6 +3,8 @@ import { Icon } from "@iconify/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Papa from "papaparse";
+
 
 type University = {
   name: string;
@@ -18,51 +20,45 @@ export default function ResultTable() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [downloading, setDownloading] = useState<boolean>(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(100);
+  const [total, setTotal] = useState<number | null>(null);
+  const [cachedPages, setCachedPages] = useState<Record<number, University[]>>({});
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const search = params.get("search");
-    const country = params.get("country");
 
-    if (search) {
-      setSearchInput(search);
-      if (search.toLowerCase() === "all") {
-        fetchAllUniversities();
-      } else {
-        fetchSuggest(search);
-      }
-    } else if (country) {
-      setSearchInput(country);
-      fetchUniversitiesByCountry(country);
-    }
-  }, [location.search]);
+
 
   const fetchSuggest = async (query: string) => {
-    try {
-      setLoading(true);
-      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: query }),
-      });
+  try {
+    setLoading(true);
+    const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: query,
+        countries: [],
+      }),
+    });
 
-      const data = await res.json();
-      if (data.suggestions) {
-        setUniversities(
-          data.suggestions.map((s: any) => ({
-            name: s.name,
-            abbreviation: s.abbreviation || "",
-            country: s.country || "",
-            path: s.path || "",
-          }))
-        );
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    const data = await res.json();
+    if (data.suggestions) {
+      setUniversities(
+        data.suggestions.map((s: any) => ({
+          name: s.name,
+          abbreviation: s.abbreviation || "",
+          country: s.country || "",
+          path: s.path || "",
+        }))
+      );
+    } else {
+      console.warn("No suggestions returned", data);
     }
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchUniversitiesByCountry = async (country: string) => {
     try {
@@ -84,25 +80,6 @@ export default function ResultTable() {
     }
   };
 
-const fetchAllUniversities = async () => {
-  try {
-    setLoading(true);
-    
-    const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities");
-    const data = await res.json();
-
-    if (data.universities) {
-      setUniversities(data.universities);
-    } else {
-      console.warn("ไม่พบข้อมูลใน all_universities");
-    }
-  } catch (err) {
-    console.error("Fetch all universities error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
 const handleDownloadCSV = async () => {
   if (!searchInput) return alert("ไม่พบคำค้นหา");
 
@@ -112,29 +89,70 @@ const handleDownloadCSV = async () => {
     const search = params.get("search");
     const country = params.get("country");
 
-    let url = "";
+    // ✅ กรณี All เหมือนเดิม
+    if (search === "All") {
+      if (!universities.length) return alert("ไม่มีข้อมูลในหน้านี้");
 
+      const headers = ["Name", "Abbreviation", "Country", "Path"];
+      const csvRows = [headers.join(",")];
+
+      universities.forEach((uni) => {
+        const row = [
+          `"${uni.name || ""}"`,
+          `"${uni.abbreviation || ""}"`,
+          `"${uni.country || ""}"`,
+          `"${uni.path || ""}"`,
+        ].join(",");
+        csvRows.push(row);
+      });
+
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `universities_page_${page}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+      return;
+    }
+
+    // ✅ กรณี search (แก้ใหม่ให้รองรับ StreamingResponse)
+    let url = "";
     if (search) {
-      if (search.toLowerCase() === "all") {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities`;
-      } else {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
-      }
+      url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
     } else if (country) {
       url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
     }
 
-    const res = await axios.get(url, { responseType: "blob" });
+    // 👇 ใช้ streaming reader อ่าน chunk ทีละส่วน
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Download failed");
 
-    const blob = new Blob([res.data], { type: "text/csv" });
-    const href = window.URL.createObjectURL(blob);
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("Streaming not supported");
+
+    let chunks: Uint8Array[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(value);
+    }
+
+    // รวม chunk ทั้งหมดเป็น blob CSV
+    const blob = new Blob(chunks, { type: "text/csv;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+
+    // ดาวน์โหลดไฟล์
     const link = document.createElement("a");
     link.href = href;
     link.download = `${searchInput}_results.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(href);
+    URL.revokeObjectURL(href);
+
   } catch (err) {
     console.error("Download CSV Error:", err);
     alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
@@ -142,6 +160,80 @@ const handleDownloadCSV = async () => {
     setDownloading(false);
   }
 };
+
+const fetchAllUniversities = async (page: number) => {
+  if (cachedPages[page]) {
+    setUniversities(cachedPages[page]);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const res = await fetch(
+      `https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities_pagination?page=${page}&page_size=${pageSize}`
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch universities");
+    const text = await res.text();
+
+    // ✅ ใช้ PapaParse เพื่ออ่าน CSV อย่างถูกต้อง
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+
+    // ✅ แปลง key ให้เป็นตัวพิมพ์เล็ก เพื่อให้ตรงกับ type University
+    const data = parsed.data.map((row: any) => ({
+      name: row["Name"] || row["name"] || "",
+      abbreviation: row["Abbreviation"] || row["abbreviation"] || "",
+      country: row["Country"] || row["country"] || "",
+      path: row["Path"] || row["path"] || "",
+    })) as University[];
+
+    console.log("✅ Parsed universities:", data.slice(0, 5)); // ดูตัวอย่าง 5 แถว
+
+    setCachedPages((prev) => ({ ...prev, [page]: data }));
+    setUniversities(data);
+    setTotal(data.length);
+  } catch (err) {
+    console.error("❌ Error fetching all universities:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const search = params.get("search");
+  const country = params.get("country");
+
+  // ✅ ถ้ามี country ใน URL → ให้ค้นหาตามประเทศเท่านั้น
+  if (country) {
+    setSearchInput(country);
+    fetchUniversitiesByCountry(country);
+    console.log('country')
+    return; // จบตรงนี้ ไม่ให้ไปต่อ
+  }
+
+  // ✅ ถ้า search = "All"
+  if (search === "All") {
+    setSearchInput("All Universities");
+    fetchAllUniversities(page);
+    console.log('All')
+    return;
+  }
+
+  // ✅ ถ้ามี search ปกติ
+  if (search) {
+    setSearchInput(search);
+    fetchSuggest(search);
+    console.log('search ปกติ')
+    return;
+  }
+}, [location.search, page]);
+
+
+  const params = new URLSearchParams(location.search);
+  const country = params.get("country");
+
 
 
   return (
@@ -167,26 +259,28 @@ const handleDownloadCSV = async () => {
             </span>
           </div>
 
-          {/* ✅ ปุ่มดาวน์โหลด CSV */}
-          <button
-            onClick={handleDownloadCSV}
-            disabled={downloading}
-            className={`flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 transition cursor-pointer ${
-              downloading ? "opacity-60 cursor-not-allowed" : "hover:shadow-[0_0_10px_#a855f7]"
-            }`}
-          >
-            {downloading ? (
-              <>
-                <Icon icon="mdi:loading" width={20} className="animate-spin" />
-                Downloading...
-              </>
-            ) : (
-              <>
-                <Icon icon="mdi:file-download-outline" width={20} />
-                Get CSV
-              </>
-            )}
-          </button>
+          {/* ✅ ปุ่มดาวน์โหลด CSV — แสดงเฉพาะตอนที่ไม่มี country */}
+          {!country && (
+            <button
+              onClick={handleDownloadCSV}
+              disabled={downloading}
+              className={`flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 transition cursor-pointer ${
+                downloading ? "opacity-60 cursor-not-allowed" : "hover:shadow-[0_0_10px_#a855f7]"
+              }`}
+            >
+              {downloading ? (
+                <>
+                  <Icon icon="mdi:loading" width={20} className="animate-spin" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Icon icon="mdi:file-download-outline" width={20} />
+                  Get CSV
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Table */}
@@ -201,6 +295,7 @@ const handleDownloadCSV = async () => {
               <span className="ml-3 text-purple-100">Loading...</span>
             </div>
           ) : (
+            <>
             <table className="w-full text-left">
               <thead className="bg-pink-50 ">
                 <tr>
@@ -243,8 +338,38 @@ const handleDownloadCSV = async () => {
                 )}
               </tbody>
             </table>
+            </>
           )}
         </div>
+        {searchInput === "All Universities" && (
+          <div className="flex justify-center items-center mt-6 gap-3 text-purple-100">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1 || loading}
+              className={`px-4 py-2 border-2 border-purple-100 rounded-full ${
+                page === 1 || loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-100 hover:text-white"
+              }`}
+            >
+              Prev
+            </button>
+            <span className="text-lg font-semibold">
+              Page {page} {loading && "(Loading...)"}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={loading}
+              className={`px-4 py-2 border-2 border-purple-100 rounded-full ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-100 hover:text-white"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
