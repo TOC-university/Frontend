@@ -111,8 +111,8 @@ export default function HomePage() {
         </div>
 
         {/* Search Section */}
-        <div className="w-[55%] h-[60px] bg-white pl-6 pr-3 py-3 gap-3 rounded-full border-3 border-purple-50 
-              text-purple-100 text-opacity-70 font-semibold text-sm focus-within:border-purple-100 flex md:text-xl md:h-[70px]">
+        <div className="w-[55%]bg-white pl-6 pr-3 py-3 gap-3 rounded-full border-3 border-purple-50 
+              text-purple-100 text-opacity-70 font-semibold text-sm focus-within:border-purple-100 flex md:text-xl">
           <input
             type="text"
             placeholder="Enter university name or country..."
