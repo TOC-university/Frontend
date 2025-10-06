@@ -90,7 +90,7 @@ export default function DetailPage() {
           <div className="flex gap-3 items-center">
             <button
               className="p-2 rounded-full bg-pink-50 transition cursor-pointer"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/")}
             >
               <Icon icon="mdi:arrow-left" className="text-purple-100" width={24} />
             </button>
