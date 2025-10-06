@@ -111,8 +111,8 @@ export default function HomePage() {
         </div>
 
         {/* Search Section */}
-        <div className="w-[55%] bg-white pl-6 pr-3 py-3 gap-3 rounded-full border-3 border-purple-50 
-              text-purple-100 text-opacity-70 font-semibold text-sm focus-within:border-purple-100 flex md:text-xl">
+        <div className="w-[55%] h-[60px] bg-white pl-6 pr-3 py-3 gap-3 rounded-full border-3 border-purple-50 
+              text-purple-100 text-opacity-70 font-semibold text-sm focus-within:border-purple-100 flex md:text-xl md:h-[70px]">
           <input
             type="text"
             placeholder="Enter university name or country..."
@@ -148,8 +148,7 @@ export default function HomePage() {
               navigate(`/ResultTable?search=${encodeURIComponent(searchValue)}`);
             }}
             className={`flex items-center px-4 py-2 rounded-full
-                bg-purple-100 text-white cursor-pointer
-            `}
+                bg-purple-100 text-white cursor-pointer`}
           >
 
             {!focused && query === "" ? (
