@@ -90,7 +90,7 @@ export default function DetailPage() {
           <div className="flex gap-3 items-center">
             <button
               className="p-2 rounded-full bg-pink-50 transition cursor-pointer"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
             >
               <Icon icon="mdi:arrow-left" className="text-purple-100" width={24} />
             </button>
@@ -98,7 +98,30 @@ export default function DetailPage() {
               <h1 className="font-bold">{university?.replace(/_/g, " ")}</h1>
             </span>
           </div>
-        </div>
+
+          {/* ✅ ปุ่ม Get CSV */}
+          <button
+            onClick={() => {
+              if (university) {
+                const wikiUrl = `https://en.wikipedia.org/wiki/${university}`;
+                window.open(
+                  `https://uni-regex.nmasang.member.ce-nacl.com/export/universities?name=${encodeURIComponent(
+                    wikiUrl
+                  )}`,
+                  "_blank"
+                );
+              } else {
+                alert("ไม่พบชื่อมหาวิทยาลัย");
+              }
+            }}
+            className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:shadow-[0_0_10px_#a855f7] transition cursor-pointer"
+          >
+            <Icon icon="mdi:file-download-outline" width={20} />
+            Get CSV
+        </button>
+
+      </div>
+
 
         {/* Loading */}
         {loading && (
