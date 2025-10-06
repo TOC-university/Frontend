@@ -148,11 +148,11 @@ export default function HomePage() {
               navigate(`/ResultTable?search=${encodeURIComponent(searchValue)}`);
             }}
             className={`flex items-center px-4 py-2 rounded-full
-                bg-purple-100 text-white cursor-pointer`}
+                bg-purple-100 text-white cursor-pointer whitespace-nowrap`}
           >
 
             {!focused && query === "" ? (
-              <Icon icon="heroicons:magnifying-glass-16-solid" className="w-6 h-6" />
+              <span>All Universities</span>
             ) : (
               "Search"
             )}
