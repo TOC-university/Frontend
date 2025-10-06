@@ -18,20 +18,13 @@ export default function ResultTable() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [downloading, setDownloading] = useState<boolean>(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(100);
+  const [total, setTotal] = useState<number | null>(null);
+  const [cachedPages, setCachedPages] = useState<Record<number, University[]>>({});
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const search = params.get("search");
-    const country = params.get("country");
 
-    if (search) {
-      setSearchInput(search);
-      fetchSuggest(search);
-    } else if (country) {
-      setSearchInput(country);
-      fetchUniversitiesByCountry(country);
-    }
-  }, [location.search]);
+
 
   const fetchSuggest = async (query: string) => {
     try {
@@ -80,43 +73,127 @@ export default function ResultTable() {
     }
   };
 
-  const handleDownloadCSV = async () => {
-    if (!searchInput) return alert("ไม่พบคำค้นหา");
+const handleDownloadCSV = async () => {
+  if (!searchInput) return alert("ไม่พบคำค้นหา");
 
-    try {
-      setDownloading(true);
-      const params = new URLSearchParams(location.search);
-      const search = params.get("search");
-      const country = params.get("country");
+  try {
+    setDownloading(true);
+    const params = new URLSearchParams(location.search);
+    const search = params.get("search");
+    const country = params.get("country");
 
-      let url = "";
-      
-      if (search) {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
-      } else if (country) {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
-      }
+    // ถ้าเป็น All ให้ใช้ข้อมูลปัจจุบัน ไม่ต้องเรียก API
+    if (search === "All") {
+      if (!universities.length) return alert("ไม่มีข้อมูลในหน้านี้");
 
-      const res = await axios.get(url, {
-        responseType: "blob",
+      const headers = ["Name", "Abbreviation", "Country", "Path"];
+      const csvRows = [headers.join(",")];
+
+      universities.forEach((uni) => {
+        const row = [
+          `"${uni.name || ""}"`,
+          `"${uni.abbreviation || ""}"`,
+          `"${uni.country || ""}"`,
+          `"${uni.path || ""}"`,
+        ].join(",");
+        csvRows.push(row);
       });
 
-      const blob = new Blob([res.data], { type: "text/csv" });
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
       const href = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = href;
-      link.download = `${searchInput}_results.csv`;
+      link.download = `universities_page_${page}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(href);
-    } catch (err) {
-      console.error("Download CSV Error:", err);
-      alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
-    } finally {
-      setDownloading(false);
+      return;
     }
-  };
+
+    // ถ้าไม่ใช่ All → ทำแบบเดิม
+    let url = "";
+    if (search) {
+      url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
+    } else if (country) {
+      url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
+    }
+
+    const res = await axios.get(url, { responseType: "blob" });
+    const blob = new Blob([res.data], { type: "text/csv" });
+    const href = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `${searchInput}_results.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(href);
+  } catch (err) {
+    console.error("Download CSV Error:", err);
+    alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
+  } finally {
+    setDownloading(false);
+  }
+};
+
+
+const fetchAllUniversities = async (page: number) => {
+  // ถ้ามีข้อมูลใน cache แล้ว ไม่ต้อง fetch ใหม่
+  if (cachedPages[page]) {
+    setUniversities(cachedPages[page]);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const res = await fetch(
+      `https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities_pagination?page=${page}&page_size=${pageSize}`,
+      { method: "GET" }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch universities");
+    const text = await res.text();
+
+    // แปลง CSV → Object
+    const rows = text.trim().split("\n");
+    const headers = rows.shift()?.split(",") || [];
+    const data = rows.map((r) => {
+      const values = r.split(",");
+      const obj: any = {};
+      headers.forEach((h, i) => (obj[h.trim()] = values[i]));
+      return obj as University;
+    });
+
+    // เก็บข้อมูลไว้ใน cache
+    setCachedPages((prev) => ({ ...prev, [page]: data }));
+    setUniversities(data);
+    setTotal(data.length);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const search = params.get("search");
+    const country = params.get("country");
+
+    if (search === "All") {
+      setSearchInput("All Universities");
+      fetchAllUniversities(page);
+    } else if (search) {
+      setSearchInput(search);
+      fetchSuggest(search);
+    } else if (country) {
+      setSearchInput(country);
+      fetchUniversitiesByCountry(country);
+    }
+  }, [location.search, page]);
+
 
   return (
     <div className="h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto scrollbar-custom pt-20 relative">
@@ -175,6 +252,7 @@ export default function ResultTable() {
               <span className="ml-3 text-purple-100">Loading...</span>
             </div>
           ) : (
+            <>
             <table className="w-full text-left">
               <thead className="bg-pink-50 ">
                 <tr>
@@ -217,8 +295,38 @@ export default function ResultTable() {
                 )}
               </tbody>
             </table>
+            </>
           )}
         </div>
+        {searchInput === "All Universities" && (
+          <div className="flex justify-center items-center mt-6 gap-3 text-purple-100">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1 || loading}
+              className={`px-4 py-2 border-2 border-purple-100 rounded-full ${
+                page === 1 || loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-100 hover:text-white"
+              }`}
+            >
+              Prev
+            </button>
+            <span className="text-lg font-semibold">
+              Page {page} {loading && "(Loading...)"}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={loading}
+              className={`px-4 py-2 border-2 border-purple-100 rounded-full ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-100 hover:text-white"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
