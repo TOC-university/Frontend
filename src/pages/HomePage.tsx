@@ -3,7 +3,7 @@ import Cross from "../assets/cross.svg";
 import GoIcon from "../assets/go-icon.svg";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";  
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
   const [query, setQuery] = useState<string>("");
@@ -14,12 +14,12 @@ export default function HomePage() {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-  
+
     if (value.trim() === "") {
       setSuggestions([]);
       return;
     }
-  
+
     try {
       const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", {
         method: "POST",
@@ -32,26 +32,26 @@ export default function HomePage() {
           countries: []
         }),
       });
-    
+
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Server ${res.status}: ${errorText}`);
       }
-    
+
       const data = await res.json();
       console.log("Response:", data);
-    
+
       const safeSuggestions = Array.isArray(data.suggestions)
         ? data.suggestions.map((s: any) => (typeof s === "string" ? s : s.name))
         : [];
       setSuggestions(safeSuggestions);
-    
+
     } catch (err) {
       console.error("Search error:", err);
-      setSuggestions([]); 
+      setSuggestions([]);
     }
   };
-    
+
   const handleClear = () => {
     setQuery("");
     setSuggestions([]);
@@ -89,8 +89,8 @@ export default function HomePage() {
         <p className="text-2xl md:text-4xl font-semibold text-purple-200 mb-6">
           Search by university name or <br /> explore universities by country
         </p>
-                {/* Tags */}
-                <div className="flex space-x-4 mb-6">
+        {/* Tags */}
+        <div className="flex space-x-4 mb-6">
           <span className=" inline-block rounded-full p-[2px] bg-gradient-to-r from-white to-purple-50">
             <span className="block px-3 py-1 rounded-full bg-white text-purple-100 text-sm">
               Smart Search
@@ -119,11 +119,13 @@ export default function HomePage() {
             value={query}
             onChange={handleChange}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && query.trim() !== "") {
-                e.preventDefault(); 
-                navigate(`/ResultTable?search=${encodeURIComponent(query)}`);
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const searchValue = query.trim() === "" ? "All" : query.trim();
+                navigate(`/ResultTable?search=${encodeURIComponent(searchValue)}`);
               }
             }}
+
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 100)}
             className="bg-white w-full focus:outline-none focus:placeholder-transparent"
@@ -141,18 +143,15 @@ export default function HomePage() {
 
           {/* ปุ่ม Search */}
           <button
-            disabled={query === ""}
             onClick={() => {
-              if (query.trim() !== "") {
-                navigate(`/ResultTable?search=${encodeURIComponent(query)}`);
-              }
+              const searchValue = query.trim() === "" ? "All" : query.trim();
+              navigate(`/ResultTable?search=${encodeURIComponent(searchValue)}`);
             }}
             className={`flex items-center px-4 py-2 rounded-full
-              ${query !== ""
-                ? "bg-purple-100 text-white cursor-pointer"
-                : "bg-purple-50 text-white"}
+                bg-purple-100 text-white cursor-pointer
             `}
           >
+
             {!focused && query === "" ? (
               <Icon icon="heroicons:magnifying-glass-16-solid" className="w-6 h-6" />
             ) : (
