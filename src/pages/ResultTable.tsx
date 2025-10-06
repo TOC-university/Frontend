@@ -26,7 +26,11 @@ export default function ResultTable() {
 
     if (search) {
       setSearchInput(search);
-      fetchSuggest(search);
+      if (search.toLowerCase() === "all") {
+        fetchAllUniversities();
+      } else {
+        fetchSuggest(search);
+      }
     } else if (country) {
       setSearchInput(country);
       fetchUniversitiesByCountry(country);
@@ -80,43 +84,65 @@ export default function ResultTable() {
     }
   };
 
-  const handleDownloadCSV = async () => {
-    if (!searchInput) return alert("ไม่พบคำค้นหา");
+const fetchAllUniversities = async () => {
+  try {
+    setLoading(true);
+    
+    const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities");
+    const data = await res.json();
 
-    try {
-      setDownloading(true);
-      const params = new URLSearchParams(location.search);
-      const search = params.get("search");
-      const country = params.get("country");
-
-      let url = "";
-      
-      if (search) {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
-      } else if (country) {
-        url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
-      }
-
-      const res = await axios.get(url, {
-        responseType: "blob",
-      });
-
-      const blob = new Blob([res.data], { type: "text/csv" });
-      const href = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = href;
-      link.download = `${searchInput}_results.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(href);
-    } catch (err) {
-      console.error("Download CSV Error:", err);
-      alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
-    } finally {
-      setDownloading(false);
+    if (data.universities) {
+      setUniversities(data.universities);
+    } else {
+      console.warn("ไม่พบข้อมูลใน all_universities");
     }
-  };
+  } catch (err) {
+    console.error("Fetch all universities error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleDownloadCSV = async () => {
+  if (!searchInput) return alert("ไม่พบคำค้นหา");
+
+  try {
+    setDownloading(true);
+    const params = new URLSearchParams(location.search);
+    const search = params.get("search");
+    const country = params.get("country");
+
+    let url = "";
+
+    if (search) {
+      if (search.toLowerCase() === "all") {
+        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/all_universities`;
+      } else {
+        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
+      }
+    } else if (country) {
+      url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
+    }
+
+    const res = await axios.get(url, { responseType: "blob" });
+
+    const blob = new Blob([res.data], { type: "text/csv" });
+    const href = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `${searchInput}_results.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(href);
+  } catch (err) {
+    console.error("Download CSV Error:", err);
+    alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
+  } finally {
+    setDownloading(false);
+  }
+};
+
 
   return (
     <div className="h-screen bg-gradient-to-b from-white to-pink-50 flex flex-col overflow-y-auto scrollbar-custom pt-20 relative">
