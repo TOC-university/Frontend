@@ -2,6 +2,7 @@ import BackWorld from "../assets/background-home.svg";
 import { Icon } from "@iconify/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 type University = {
   name: string;
@@ -16,6 +17,7 @@ export default function ResultTable() {
   const [searchInput, setSearchInput] = useState<string | null>(null);
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [downloading, setDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -31,29 +33,26 @@ export default function ResultTable() {
     }
   }, [location.search]);
 
-
   const fetchSuggest = async (query: string) => {
     try {
       setLoading(true);
-      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", { //เเก้ domain
+      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/search/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            q: query 
-        }),
+        body: JSON.stringify({ q: query }),
       });
 
       const data = await res.json();
       if (data.suggestions) {
         setUniversities(
           data.suggestions.map((s: any) => ({
-            name: s.name,                
+            name: s.name,
             abbreviation: s.abbreviation || "",
             country: s.country || "",
             path: s.path || "",
           }))
         );
-      }     
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -61,11 +60,10 @@ export default function ResultTable() {
     }
   };
 
-
   const fetchUniversitiesByCountry = async (country: string) => {
     try {
       setLoading(true);
-      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities", { //เเก้ domain
+      const res = await fetch("https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ countries: [country] }),
@@ -79,6 +77,44 @@ export default function ResultTable() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    if (!searchInput) return alert("ไม่พบคำค้นหา");
+
+    try {
+      setDownloading(true);
+      const params = new URLSearchParams(location.search);
+      const search = params.get("search");
+      const country = params.get("country");
+
+      let url = "";
+      
+      if (search) {
+        url = `https://uni-regex.nmasang.member.ce-nacl.com/export/search?q=${encodeURIComponent(search)}`;
+      } else if (country) {
+        url = `https://uni-regex.nmasang.member.ce-nacl.com/crawl/universities`;
+      }
+
+      const res = await axios.get(url, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const href = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `${searchInput}_results.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(href);
+    } catch (err) {
+      console.error("Download CSV Error:", err);
+      alert("ดาวน์โหลดไฟล์ไม่สำเร็จ");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -96,17 +132,34 @@ export default function ResultTable() {
           <div className="flex gap-3 items-center ">
             <button
               className="p-2 rounded-full bg-pink-50 transition cursor-pointer"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
             >
               <Icon icon="mdi:arrow-left" className="text-purple-100" width={24} />
             </button>
-            <span className="text-xl  text-purple-100">
+            <span className="text-xl text-purple-100">
               Result : <span className="font-bold">{searchInput}</span>
             </span>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:shadow-[0_0_10px_#a855f7] transition cursor-pointer">
-            <Icon icon="mdi:file-download-outline" width={20} />
-            Get CSV
+
+          {/* ✅ ปุ่มดาวน์โหลด CSV */}
+          <button
+            onClick={handleDownloadCSV}
+            disabled={downloading}
+            className={`flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 transition cursor-pointer ${
+              downloading ? "opacity-60 cursor-not-allowed" : "hover:shadow-[0_0_10px_#a855f7]"
+            }`}
+          >
+            {downloading ? (
+              <>
+                <Icon icon="mdi:loading" width={20} className="animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Icon icon="mdi:file-download-outline" width={20} />
+                Get CSV
+              </>
+            )}
           </button>
         </div>
 
@@ -137,23 +190,27 @@ export default function ResultTable() {
                     <tr key={index} className="border-t-1 border-pink-50 ">
                       <td className="px-6 py-2">{uni.name}</td>
                       <td className="px-6 py-2">{uni.abbreviation}</td>
-                      <td className="px-6 py-2 cursor-pointer" onClick={() => navigate(`/ResultTable?country=${uni.country}`)} >{uni.country} ↗</td>
+                      <td
+                        className="px-6 py-2 cursor-pointer"
+                        onClick={() => navigate(`/ResultTable?country=${uni.country}`)}
+                      >
+                        {uni.country} ↗
+                      </td>
                       <td className="px-6 py-2 ">
                         <button
-                            onClick={() => navigate(`/detail/${uni.path.replace(/^\/wiki\//, "")}`)}
-                            className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:bg-purple-100 hover:text-white transition cursor-pointer"
-                            >
-                            Detail <Icon icon="mdi:arrow-right" width={18} />
+                          onClick={() =>
+                            navigate(`/detail/${uni.path?.replace(/^\/wiki\//, "")}`)
+                          }
+                          className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:bg-purple-100 hover:text-white transition cursor-pointer"
+                        >
+                          Detail <Icon icon="mdi:arrow-right" width={18} />
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-4 text-center"
-                    >
+                    <td colSpan={4} className="px-6 py-4 text-center">
                       No results found
                     </td>
                   </tr>
