@@ -137,10 +137,10 @@ export default function ResultTable() {
                     <tr key={index} className="border-t-1 border-pink-50 ">
                       <td className="px-6 py-2">{uni.name}</td>
                       <td className="px-6 py-2">{uni.abbreviation}</td>
-                      <td className="px-6 py-2 cursor-pointer" onClick={() => navigate(`/ResultTable?country=${uni.name}`)} >{uni.country} ↗</td>
+                      <td className="px-6 py-2 cursor-pointer" onClick={() => navigate(`/ResultTable?country=${uni.country}`)} >{uni.country} ↗</td>
                       <td className="px-6 py-2 ">
                         <button
-                            onClick={() => navigate(`/detail/${uni.name}`)}
+                            onClick={() => navigate(`/detail/${uni.path.replace(/^\/wiki\//, "")}`)}
                             className="flex items-center gap-2 px-5 py-2 border-2 border-purple-100 rounded-full text-purple-100 hover:bg-purple-100 hover:text-white transition cursor-pointer"
                             >
                             Detail <Icon icon="mdi:arrow-right" width={18} />
