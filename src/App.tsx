@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Main from "./pages/Main";
 import HomePage from "./pages/HomePage";
 import Logo from "./assets/logo-nav.svg";
 import CatGithub from "./assets/cat-github.svg";
@@ -32,8 +31,7 @@ export default function App() {
         {/* Routes */}
         <div className="flex-1 ">
           <Routes>
-            <Route path="/" element={<Main />} />
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/ResultTable" element={<ResultTable />} />
             <Route path="/Detail/:university" element={<DetailPage />} />
           </Routes>
